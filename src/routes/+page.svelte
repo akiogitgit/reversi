@@ -11,14 +11,24 @@
 	import BlackStone from '../components/BlackStone.svelte'
 	import WhitePutMarker from '../components/WhitePutMarker.svelte'
 	import WhiteStone from '../components/WhiteStone.svelte'
+	import { fly } from 'svelte/transition'
 
-	// 考えること
+	// やること
 	// 1. 盤上を表示
 	// 2. 順番に押す
 	// 3. 押せる場所を挟める場所のみに
 	// 3. (押せる場所を一覧で表示する？ or 押したときに挟めるか判定)
 	// 4. 挟んだらひっくり返す
-	// 5. 勝敗
+	// 5. 現状で押せる位置を配列に格納
+	// 6. 置ける位置にマーカー
+	//    (押せる位置のみtabIndex付ける)
+	// 7. 置ける位置がない時、パスボタン表示
+	// 8. 勝敗
+	//    盤上が全部埋まったら終了
+	//    白・黒を数えて多い方が勝ちと表示。引き分けも
+	//    両方押せない時も終了
+	// 9. リファクタリング
+	//    コンポーネント、カスタムフック？
 
 	const FIELD_SIZE = 8
 
@@ -110,7 +120,11 @@
 
 		// 右下 をひっくり返せるかチェック
 		if (x < FIELD_SIZE - 2 && y < FIELD_SIZE - 2) {
-			for (let ix = x + 1, iy = y + 1; ix < FIELD_SIZE && iy < FIELD_SIZE; ix++, iy++) {
+			for (
+				let ix = x + 1, iy = y + 1;
+				ix < FIELD_SIZE && iy < FIELD_SIZE;
+				ix++, iy++
+			) {
 				const field = fields[iy][ix]
 				if (!field) break
 
@@ -293,7 +307,11 @@
 			let ableToPut = false
 			const otherColorFields: Position[] = []
 
-			for (let ix = x + 1, iy = y + 1; ix < FIELD_SIZE && iy < FIELD_SIZE; ix++, iy++) {
+			for (
+				let ix = x + 1, iy = y + 1;
+				ix < FIELD_SIZE && iy < FIELD_SIZE;
+				ix++, iy++
+			) {
 				const field = fields[iy][ix]
 				if (!field) break
 
@@ -394,16 +412,28 @@
 		{/each}
 	</div>
 
-	<div class="flex mt-8 text-center text-xl items-center justify-center">
-		<div
-			class="h-11vw max-h-60.5px max-w-60.5px grid w-11vw place-items-center sm:(h-60.5px w-60.5px)"
-		>
-			{#if currentColor === '白'}
-				<WhiteStone />
-			{:else if currentColor === '黒'}
-				<BlackStone />
-			{/if}
+	<div class="flex mt-8 gap-4 justify-center items-center">
+		<div class="flex text-center text-xl items-center justify-center">
+			<div
+				class="h-11vw max-h-60.5px max-w-60.5px grid w-11vw place-items-center sm:(h-60.5px w-60.5px) "
+			>
+				{#if currentColor === '白'}
+					<WhiteStone />
+				{:else if currentColor === '黒'}
+					<BlackStone />
+				{/if}
+			</div>
+			の番です
 		</div>
-		の番です
+
+		{#if !putAbleFields.length}
+			<button
+				class="border border-black rounded-md py-2 px-4"
+				on:click={changePlayer}
+				in:fly={{ duration: 1000, y: 20 }}
+			>
+				パスする
+			</button>
+		{/if}
 	</div>
 </section>

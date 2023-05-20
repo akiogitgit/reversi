@@ -18,8 +18,11 @@
 	// 4. 挟んだらひっくり返す
 	// 5. 勝敗
 
+	const FIELD_SIZE = 8
+
 	type Position = { y: number; x: number }
 	type Field = null | '黒' | '白'
+
 	let fields: Field[][] = [
 		[null, null, null, null, null, null, null, null],
 		[null, null, null, null, null, null, null, null],
@@ -30,7 +33,6 @@
 		[null, null, null, null, null, null, null, null],
 		[null, null, null, null, null, null, null, null]
 	]
-
 	let currentColor: '黒' | '白' = '黒'
 
 	// プレイヤーを交互に
@@ -40,22 +42,22 @@
 
 	// 受けとった位置の石をひっくり返す
 	const reverseFields = (targetFields: Position[]) => {
-		// TODO: console.log('受け取ったよ', targetFields)
 		for (let i = 0; i < targetFields.length; i++) {
 			const { x, y } = targetFields[i]
 			fields[y][x] = currentColor
 		}
 	}
 
-	// 挟めるか判定じゃなくて、挟む関数でいい
-	const checkSandwichAbility = (y: number, x: number): false | Position[] => {
-		let ableToPut = false // ひっくり返せる石があるか
-		const targetFields: Position[] = [] // ひっくり返す予定のフィールド
+	// TODO: 隣ならbreakはいらないかも？
 
-		// 上　(上をひっくり返せる位置に置いた)
+	// 挟めるか判定じゃなくて、挟む関数でいい
+	const checkSandwichAbility = (y: number, x: number): Position[] => {
+		const targetFields: Position[] = [] // ひっくり返すフィールド
+
+		// 上 をひっくり返せる位置に置いた
 		if (y > 1) {
-			const nextColor = fields[y - 1][x]
-			if (nextColor === currentColor) return false // 隣が同じ色
+			let ableToPut = false // ひっくり返せる石があるか
+			const otherColorFields: Position[] = [] // 連続する違う色の座標
 
 			// forでcurrentColorと同じ色が出るまで、座標を配列に格納する
 			for (let i = y - 1; i >= 0; i--) {
@@ -64,28 +66,169 @@
 
 				// 同じ色が出たら、trueにしてループを抜ける
 				if (field === currentColor) {
+					if (i === y - 1) break // 隣(1つ上)が同じ色ならひっくり返せない
 					ableToPut = true
 					break
 				}
-				targetFields.push({ x, y: i })
+				otherColorFields.push({ x, y: i }) // 座標を追加
 			}
+
+			// 上向きにひっくり返せるなら、targetFieldsに追加
+			if (ableToPut) targetFields.push(...otherColorFields)
 		}
 
-		// ひっくり返せるなら、対象の座標を返す
-		return ableToPut && targetFields
+		// 下 をひっくり返せる位置に置いた
+		if (y < FIELD_SIZE - 2) {
+			let ableToPut = false
+			const otherColorFields: Position[] = []
+
+			for (let i = y + 1; i < FIELD_SIZE; i++) {
+				const field = fields[i][x]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (i === y + 1) break
+					ableToPut = true
+					break
+				}
+				otherColorFields.push({ x, y: i })
+			}
+
+			if (ableToPut) targetFields.push(...otherColorFields)
+		}
+
+		// 左 をひっくり返せる位置に置いた
+		if (x > 1) {
+			let ableToPut = false
+			const otherColorFields: Position[] = []
+
+			for (let i = x - 1; i >= 0; i--) {
+				const field = fields[y][i]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (i === x - 1) break
+					ableToPut = true
+					break
+				}
+				otherColorFields.push({ x: i, y })
+			}
+
+			if (ableToPut) targetFields.push(...otherColorFields)
+		}
+
+		// 右 をひっくり返せる位置に置いた
+		if (x < FIELD_SIZE - 2) {
+			let ableToPut = false
+			const otherColorFields: Position[] = []
+
+			for (let i = x + 1; i < FIELD_SIZE; i++) {
+				const field = fields[y][i]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (i === x + 1) break
+					ableToPut = true
+					break
+				}
+				otherColorFields.push({ x: i, y })
+			}
+
+			if (ableToPut) targetFields.push(...otherColorFields)
+		}
+
+		// 左上 をひっくり返せる位置に置いた
+		if (x > 1 && y > 1) {
+			let ableToPut = false
+			const otherColorFields: Position[] = []
+
+			for (let ix = x - 1, iy = y - 1; ix >= 0 && iy >= 0; ix--, iy--) {
+				const field = fields[iy][ix]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (ix === x - 1) break
+					console.log('ssss')
+					ableToPut = true
+					break
+				}
+				otherColorFields.push({ x: ix, y: iy })
+			}
+
+			if (ableToPut) targetFields.push(...otherColorFields)
+		}
+
+		// 右下 をひっくり返せる位置に置いた
+		if (x < FIELD_SIZE - 2 && y < FIELD_SIZE - 2) {
+			let ableToPut = false
+			const otherColorFields: Position[] = []
+
+			for (let ix = x + 1, iy = y + 1; ix < FIELD_SIZE && iy < FIELD_SIZE; ix++, iy++) {
+				const field = fields[iy][ix]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (ix === x + 1) break
+					ableToPut = true
+					break
+				}
+				otherColorFields.push({ x: ix, y: iy })
+			}
+
+			if (ableToPut) targetFields.push(...otherColorFields)
+		}
+
+		// 右上 をひっくり返せる位置に置いた
+		if (x < FIELD_SIZE - 2 && y > 1) {
+			let ableToPut = false
+			const otherColorFields: Position[] = []
+
+			for (let ix = x + 1, iy = y - 1; ix < FIELD_SIZE && iy >= 0; ix++, iy--) {
+				const field = fields[iy][ix]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (ix === x + 1) break
+					ableToPut = true
+					break
+				}
+				otherColorFields.push({ x: ix, y: iy })
+			}
+
+			if (ableToPut) targetFields.push(...otherColorFields)
+		}
+
+		// 左下 をひっくり返せる位置に置いた
+		if (x > 1 && y < FIELD_SIZE - 2) {
+			let ableToPut = false
+			const otherColorFields: Position[] = []
+
+			for (let ix = x - 1, iy = y + 1; ix >= 0 && iy < FIELD_SIZE; ix--, iy++) {
+				const field = fields[iy][ix]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (ix === x + 1) break
+					ableToPut = true
+					break
+				}
+				otherColorFields.push({ x: ix, y: iy })
+			}
+
+			if (ableToPut) targetFields.push(...otherColorFields)
+		}
+
+		return targetFields
 	}
 
 	// フィールドを押す
-	// 挟めたかチェックして、置きたい
-	// 挟む関数で挟めたかを返すのはキモイ
 	const onClickField = (y: number, x: number) => {
 		if (fields[y][x]) return // 既に置かれている
 
 		const targetFields = checkSandwichAbility(y, x)
-		if (!targetFields) return // ひっくり返せない
+		if (!targetFields.length) return // ひっくり返せない
 
-		fields[y][x] = currentColor
-		// ひっくり返す関数(targetFields)
+		fields[y][x] = currentColor // 石を置く
 		reverseFields(targetFields)
 		changePlayer()
 	}

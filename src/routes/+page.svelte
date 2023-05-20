@@ -7,7 +7,9 @@
 	// 盤上全て埋まるか、どちらも挟めないなら終了
 	// 石の多い方の勝利。引き分けもある。
 
+	import BlackPutMarker from '../components/BlackPutMarker.svelte'
 	import BlackStone from '../components/BlackStone.svelte'
+	import WhitePutMarker from '../components/WhitePutMarker.svelte'
 	import WhiteStone from '../components/WhiteStone.svelte'
 
 	// 考えること
@@ -180,7 +182,7 @@
 	// TODO: 隣ならbreakはいらないかも？
 
 	// 挟めるか判定じゃなくて、挟む関数でいい
-	const checkSandwichAbility = (y: number, x: number): Position[] => {
+	const getReverseFields = (y: number, x: number): Position[] => {
 		const targetFields: Position[] = [] // ひっくり返すフィールド
 
 		// 上 をひっくり返せる位置に置いた
@@ -353,7 +355,7 @@
 	const onClickField = (y: number, x: number) => {
 		if (fields[y][x]) return // 既に置かれている
 
-		const targetFields = checkSandwichAbility(y, x)
+		const targetFields = getReverseFields(y, x)
 		if (!targetFields.length) return // ひっくり返せない
 
 		fields[y][x] = currentColor // 石を置く
@@ -369,22 +371,29 @@
 		{#each fields as field1, y (y)}
 			<div class="flex">
 				{#each field1 as field, x (x)}
-					<button
-						class="border border-black h-11vw max-h-60.5px grid w-11vw place-items-center sm:(h-60.5px w-60.5px)"
-						on:click={() => onClickField(y, x)}
-					>
-						{#if field === '白'}
-							<WhiteStone />
-						{:else if field === '黒'}
-							<BlackStone />
-						{/if}
-					</button>
+					<div>
+						<button
+							class="border border-black h-11vw max-w-60.5px max-h-60.5px grid w-11vw place-items-center"
+							on:click={() => onClickField(y, x)}
+						>
+							{#if field === '白'}
+								<WhiteStone />
+							{:else if field === '黒'}
+								<BlackStone />
+							{:else if putAbleFields.find(pos => pos.x === x && pos.y === y)}
+								{#if currentColor === '白'}
+									<WhitePutMarker />
+								{:else}
+									<BlackPutMarker />
+								{/if}
+							{/if}
+						</button>
+					</div>
 				{/each}
 			</div>
 		{/each}
 	</div>
 
-	<!-- <p class="mt-8 text-center text-xl">{currentColor === '白' ? '白' : '黒'}の番です</p> -->
 	<div class="flex mt-8 text-center text-xl items-center justify-center">
 		<div
 			class="h-11vw max-h-60.5px max-w-60.5px grid w-11vw place-items-center sm:(h-60.5px w-60.5px)"

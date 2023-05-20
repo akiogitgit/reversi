@@ -148,7 +148,6 @@
 
 				if (field === currentColor) {
 					if (ix === x - 1) break
-					console.log('ssss')
 					ableToPut = true
 					break
 				}
@@ -256,5 +255,17 @@
 		{/each}
 	</div>
 
-	<p class="mt-8 text-center text-xl">{currentColor === '白' ? '白' : '黒'}の番です</p>
+	<!-- <p class="mt-8 text-center text-xl">{currentColor === '白' ? '白' : '黒'}の番です</p> -->
+	<div class="flex mt-8 text-center text-xl items-center justify-center">
+		<div
+			class="h-11vw max-h-60.5px max-w-60.5px grid w-11vw place-items-center sm:(h-60.5px w-60.5px)"
+		>
+			{#if currentColor === '白'}
+				<WhiteStone />
+			{:else if currentColor === '黒'}
+				<BlackStone />
+			{/if}
+		</div>
+		の番です
+	</div>
 </section>

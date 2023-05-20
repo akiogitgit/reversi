@@ -35,19 +35,45 @@
 	type Position = { y: number; x: number }
 	type Field = null | '黒' | '白'
 
-	let fields: Field[][] = [
-		[null, null, null, null, null, null, null, null],
-		[null, null, null, null, null, null, null, null],
-		[null, null, null, null, null, null, null, null],
-		[null, null, null, '白', '黒', null, null, null],
-		[null, null, null, '黒', '白', null, null, null],
-		[null, null, null, null, null, null, null, null],
-		[null, null, null, null, null, null, null, null],
-		[null, null, null, null, null, null, null, null]
-	]
+	let fields: Field[][] =
+		// [
+		// 	['黒', '黒', '黒', '黒', '黒', '黒', '黒', '黒'],
+		// 	['黒', '黒', null, '白', '黒', '黒', '黒', '黒'],
+		// 	['黒', '黒', '黒', '黒', '黒', '黒', '黒', '黒'],
+		// 	['黒', '黒', '黒', '黒', '黒', '黒', '黒', '黒'],
+		// 	['白', '白', '白', '白', '白', '白', '白', '白'],
+		// 	['白', '白', '白', '白', '白', '白', '白', '白'],
+		// 	['白', '白', '白', '白', '白', '白', '白', '白'],
+		// 	['白', '白', '白', '白', '白', '白', '白', '白']
+		// ]
+		// 両方パスで終了
+		// [
+		// 	['黒', '黒', '黒', '黒', '黒', '黒', null, '黒'],
+		// 	['黒', null, '黒', '黒', '黒', '黒', '黒', '黒'],
+		// 	['黒', '黒', '黒', '黒', '黒', '黒', '黒', '黒'],
+		// 	['黒', '黒', '黒', '黒', '黒', '黒', '黒', '黒'],
+		// 	['黒', '白', '黒', '黒', '黒', '黒', '黒', '黒'],
+		// 	['黒', '黒', '黒', '黒', '黒', '黒', '黒', '黒'],
+		// 	['黒', '黒', '黒', '黒', '黒', '黒', '黒', '黒'],
+		// 	[null, '黒', '黒', '黒', '黒', '黒', '黒', '黒']
+		// ]
+		[
+			[null, null, null, null, null, null, null, null],
+			[null, null, null, null, null, null, null, null],
+			[null, null, null, null, null, null, null, null],
+			[null, null, null, '白', '黒', null, null, null],
+			[null, null, null, '黒', '白', null, null, null],
+			[null, null, null, null, null, null, null, null],
+			[null, null, null, null, null, null, null, null],
+			[null, null, null, null, null, null, null, null]
+		]
 	let currentColor: '黒' | '白' = '黒'
-
 	let putAbleFields: Position[] = [] // 置くことが出来る位置
+
+	let isPassedPrev = false // 前回パスした
+	let isFinished = false
+	let finishMessage = '30対20で' // 〇対✕で...
+	let winner: Field = null // 〇の勝ち
 
 	// 座標が押せるかをチェック
 	const checkPutAbility = (y: number, x: number): boolean => {
@@ -165,10 +191,10 @@
 	}
 
 	// TODO: 分かりにくいから関数にする
-	// 全フィールドを置けるか確認
 	$: {
 		const _ = currentColor // 石が変わる度に実行するために設置
 
+		// 全フィールドで置けるか確認
 		putAbleFields = []
 		for (let y = 0; y < FIELD_SIZE; y++) {
 			for (let x = 0; x < FIELD_SIZE; x++) {
@@ -177,6 +203,30 @@
 				const ableToPut = checkPutAbility(y, x)
 				if (ableToPut) putAbleFields = [...putAbleFields, { x, y }]
 			}
+		}
+
+		// 終了か判定
+		let unableToPutBoth = false // どちらも置けない (文法的におかしい)
+		// 置ける場所が無く、前回パスした
+		if (!putAbleFields.length && isPassedPrev) unableToPutBoth = true
+		isPassedPrev = !putAbleFields.length
+
+		// 引数の配列でnullでない要素数が、マス数と同じ
+		const checkAllElementsFill = (fieldSize: number, array: readonly any[]) => {
+			// 配列を1次元配列にして、nullの要素を弾く
+			const fillElements = array.flat().filter(Boolean)
+			return fillElements.length === fieldSize * fieldSize
+		}
+
+		// 全部埋まったか、どちらも押せないなら終了
+		if (checkAllElementsFill(FIELD_SIZE, fields) || unableToPutBoth) {
+			isFinished = true
+			const whiteCount = fields.flat().filter(v => v === '白').length
+			const blackCount = fields.flat().filter(v => v === '黒').length
+
+			finishMessage = `${whiteCount}対${blackCount}で`
+			if (whiteCount > blackCount) winner = '白'
+			if (blackCount > whiteCount) winner = '黒'
 		}
 	}
 
@@ -195,7 +245,6 @@
 
 	// TODO: 隣ならbreakはいらないかも？
 
-	// 挟めるか判定じゃなくて、挟む関数でいい
 	const getReverseFields = (y: number, x: number): Position[] => {
 		const targetFields: Position[] = [] // ひっくり返すフィールド
 
@@ -211,7 +260,6 @@
 
 				// 同じ色が出たら、trueにしてループを抜ける
 				if (field === currentColor) {
-					if (i === y - 1) break // 隣(1つ上)が同じ色ならひっくり返せない
 					ableToPut = true
 					break
 				}
@@ -232,7 +280,6 @@
 				if (!field) break
 
 				if (field === currentColor) {
-					if (i === y + 1) break
 					ableToPut = true
 					break
 				}
@@ -252,7 +299,6 @@
 				if (!field) break
 
 				if (field === currentColor) {
-					if (i === x - 1) break
 					ableToPut = true
 					break
 				}
@@ -272,7 +318,6 @@
 				if (!field) break
 
 				if (field === currentColor) {
-					if (i === x + 1) break
 					ableToPut = true
 					break
 				}
@@ -292,7 +337,6 @@
 				if (!field) break
 
 				if (field === currentColor) {
-					if (ix === x - 1) break
 					ableToPut = true
 					break
 				}
@@ -316,7 +360,6 @@
 				if (!field) break
 
 				if (field === currentColor) {
-					if (ix === x + 1) break
 					ableToPut = true
 					break
 				}
@@ -336,7 +379,6 @@
 				if (!field) break
 
 				if (field === currentColor) {
-					if (ix === x + 1) break
 					ableToPut = true
 					break
 				}
@@ -356,7 +398,6 @@
 				if (!field) break
 
 				if (field === currentColor) {
-					if (ix === x + 1) break
 					ableToPut = true
 					break
 				}
@@ -412,28 +453,51 @@
 		{/each}
 	</div>
 
-	<div class="flex mt-8 gap-4 justify-center items-center">
-		<div class="flex text-center text-xl items-center justify-center">
+	<div class="flex mt-8 text-xl gap-4 justify-center items-center">
+		{#if !isFinished}
+			<div class="flex items-center justify-center">
+				<div
+					class="h-11vw max-h-60.5px max-w-60.5px grid w-11vw place-items-center sm:(h-60.5px w-60.5px) "
+				>
+					{#if currentColor === '白'}
+						<WhiteStone />
+					{:else if currentColor === '黒'}
+						<BlackStone />
+					{/if}
+				</div>
+				の番です
+			</div>
+
+			{#if !putAbleFields.length}
+				<button
+					class="border border-black rounded-md py-2 px-4"
+					on:click={changePlayer}
+					in:fly={{ duration: 1000, y: 20 }}
+				>
+					パスする
+				</button>
+			{/if}
+		{:else}
+			<p in:fly={{ duration: 1000, y: 20, delay: 500 }}>{finishMessage}</p>
 			<div
-				class="h-11vw max-h-60.5px max-w-60.5px grid w-11vw place-items-center sm:(h-60.5px w-60.5px) "
+				class="flex gap-2 items-center justify-center"
+				in:fly={{ duration: 1000, y: 20, delay: 2000 }}
 			>
-				{#if currentColor === '白'}
-					<WhiteStone />
-				{:else if currentColor === '黒'}
-					<BlackStone />
+				{#if winner}
+					<div
+						class="h-11vw max-h-60.5px max-w-60.5px grid w-11vw place-items-center sm:(h-60.5px w-60.5px) "
+					>
+						{#if winner === '白'}
+							<WhiteStone />
+						{:else if winner === '黒'}
+							<BlackStone />
+						{/if}
+					</div>
+					の勝ち
+				{:else}
+					引き分け
 				{/if}
 			</div>
-			の番です
-		</div>
-
-		{#if !putAbleFields.length}
-			<button
-				class="border border-black rounded-md py-2 px-4"
-				on:click={changePlayer}
-				in:fly={{ duration: 1000, y: 20 }}
-			>
-				パスする
-			</button>
 		{/if}
 	</div>
 </section>

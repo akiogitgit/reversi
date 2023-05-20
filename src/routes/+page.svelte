@@ -7,7 +7,9 @@
 	// 盤上全て埋まるか、どちらも挟めないなら終了
 	// 石の多い方の勝利。引き分けもある。
 
+	import BlackPutMarker from '../components/BlackPutMarker.svelte'
 	import BlackStone from '../components/BlackStone.svelte'
+	import WhitePutMarker from '../components/WhitePutMarker.svelte'
 	import WhiteStone from '../components/WhiteStone.svelte'
 
 	// 考えること
@@ -35,6 +37,135 @@
 	]
 	let currentColor: '黒' | '白' = '黒'
 
+	let putAbleFields: Position[] = [] // 置くことが出来る位置
+
+	// 座標が押せるかをチェック
+	const checkPutAbility = (y: number, x: number): boolean => {
+		// 上 をひっくり返せるかチェック
+		if (y > 1) {
+			// forでcurrentColorと同じ色が出るまで、座標を配列に格納する
+			for (let i = y - 1; i >= 0; i--) {
+				const field = fields[i][x]
+				if (!field) break // 置かれていない
+
+				// 同じ色が出たら、trueにしてループを抜ける
+				if (field === currentColor) {
+					if (i === y - 1) break // 隣(1つ上)が同じ色ならひっくり返せない
+					return true
+				}
+			}
+		}
+
+		// 下 をひっくり返せるかチェック
+		if (y < FIELD_SIZE - 2) {
+			for (let i = y + 1; i < FIELD_SIZE; i++) {
+				const field = fields[i][x]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (i === y + 1) break
+					return true
+				}
+			}
+		}
+
+		// 左 をひっくり返せるかチェック
+		if (x > 1) {
+			for (let i = x - 1; i >= 0; i--) {
+				const field = fields[y][i]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (i === x - 1) break
+					return true
+				}
+			}
+		}
+
+		// 右 をひっくり返せるかチェック
+		if (x < FIELD_SIZE - 2) {
+			for (let i = x + 1; i < FIELD_SIZE; i++) {
+				const field = fields[y][i]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (i === x + 1) break
+					return true
+				}
+			}
+		}
+
+		// 左上 をひっくり返せるかチェック
+		if (x > 1 && y > 1) {
+			for (let ix = x - 1, iy = y - 1; ix >= 0 && iy >= 0; ix--, iy--) {
+				const field = fields[iy][ix]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (ix === x - 1) break
+					return true
+				}
+			}
+		}
+
+		// 右下 をひっくり返せるかチェック
+		if (x < FIELD_SIZE - 2 && y < FIELD_SIZE - 2) {
+			for (let ix = x + 1, iy = y + 1; ix < FIELD_SIZE && iy < FIELD_SIZE; ix++, iy++) {
+				const field = fields[iy][ix]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (ix === x + 1) break
+					return true
+				}
+			}
+		}
+
+		// 右上 をひっくり返せるかチェック
+		if (x < FIELD_SIZE - 2 && y > 1) {
+			for (let ix = x + 1, iy = y - 1; ix < FIELD_SIZE && iy >= 0; ix++, iy--) {
+				const field = fields[iy][ix]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (ix === x + 1) break
+					return true
+				}
+			}
+		}
+
+		// 左下 をひっくり返せるかチェック
+		if (x > 1 && y < FIELD_SIZE - 2) {
+			for (let ix = x - 1, iy = y + 1; ix >= 0 && iy < FIELD_SIZE; ix--, iy++) {
+				const field = fields[iy][ix]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (ix === x - 1) break
+					return true
+				}
+			}
+		}
+
+		return false
+	}
+
+	// TODO: 分かりにくいから関数にする
+	// 全フィールドを置けるか確認
+	$: {
+		const _ = currentColor // 石が変わる度に実行するために設置
+
+		putAbleFields = []
+		for (let y = 0; y < FIELD_SIZE; y++) {
+			for (let x = 0; x < FIELD_SIZE; x++) {
+				if (fields[y][x]) continue // 石が置かれている位置は除く
+
+				const ableToPut = checkPutAbility(y, x)
+				if (ableToPut) putAbleFields = [...putAbleFields, { x, y }]
+			}
+		}
+	}
+
 	// プレイヤーを交互に
 	const changePlayer = () => {
 		currentColor = currentColor === '白' ? '黒' : '白'
@@ -51,7 +182,7 @@
 	// TODO: 隣ならbreakはいらないかも？
 
 	// 挟めるか判定じゃなくて、挟む関数でいい
-	const checkSandwichAbility = (y: number, x: number): Position[] => {
+	const getReverseFields = (y: number, x: number): Position[] => {
 		const targetFields: Position[] = [] // ひっくり返すフィールド
 
 		// 上 をひっくり返せる位置に置いた
@@ -224,7 +355,7 @@
 	const onClickField = (y: number, x: number) => {
 		if (fields[y][x]) return // 既に置かれている
 
-		const targetFields = checkSandwichAbility(y, x)
+		const targetFields = getReverseFields(y, x)
 		if (!targetFields.length) return // ひっくり返せない
 
 		fields[y][x] = currentColor // 石を置く
@@ -240,22 +371,29 @@
 		{#each fields as field1, y (y)}
 			<div class="flex">
 				{#each field1 as field, x (x)}
-					<button
-						class="border border-black h-11vw max-h-60.5px grid w-11vw place-items-center sm:(h-60.5px w-60.5px)"
-						on:click={() => onClickField(y, x)}
-					>
-						{#if field === '白'}
-							<WhiteStone />
-						{:else if field === '黒'}
-							<BlackStone />
-						{/if}
-					</button>
+					<div>
+						<button
+							class="border border-black h-11vw max-w-60.5px max-h-60.5px grid w-11vw place-items-center"
+							on:click={() => onClickField(y, x)}
+						>
+							{#if field === '白'}
+								<WhiteStone />
+							{:else if field === '黒'}
+								<BlackStone />
+							{:else if putAbleFields.find(pos => pos.x === x && pos.y === y)}
+								{#if currentColor === '白'}
+									<WhitePutMarker />
+								{:else}
+									<BlackPutMarker />
+								{/if}
+							{/if}
+						</button>
+					</div>
 				{/each}
 			</div>
 		{/each}
 	</div>
 
-	<!-- <p class="mt-8 text-center text-xl">{currentColor === '白' ? '白' : '黒'}の番です</p> -->
 	<div class="flex mt-8 text-center text-xl items-center justify-center">
 		<div
 			class="h-11vw max-h-60.5px max-w-60.5px grid w-11vw place-items-center sm:(h-60.5px w-60.5px)"

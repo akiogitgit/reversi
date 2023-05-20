@@ -35,6 +35,135 @@
 	]
 	let currentColor: '黒' | '白' = '黒'
 
+	let putAbleFields: Position[] = [] // 置くことが出来る位置
+
+	// 座標が押せるかをチェック
+	const checkPutAbility = (y: number, x: number): boolean => {
+		// 上 をひっくり返せるかチェック
+		if (y > 1) {
+			// forでcurrentColorと同じ色が出るまで、座標を配列に格納する
+			for (let i = y - 1; i >= 0; i--) {
+				const field = fields[i][x]
+				if (!field) break // 置かれていない
+
+				// 同じ色が出たら、trueにしてループを抜ける
+				if (field === currentColor) {
+					if (i === y - 1) break // 隣(1つ上)が同じ色ならひっくり返せない
+					return true
+				}
+			}
+		}
+
+		// 下 をひっくり返せるかチェック
+		if (y < FIELD_SIZE - 2) {
+			for (let i = y + 1; i < FIELD_SIZE; i++) {
+				const field = fields[i][x]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (i === y + 1) break
+					return true
+				}
+			}
+		}
+
+		// 左 をひっくり返せるかチェック
+		if (x > 1) {
+			for (let i = x - 1; i >= 0; i--) {
+				const field = fields[y][i]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (i === x - 1) break
+					return true
+				}
+			}
+		}
+
+		// 右 をひっくり返せるかチェック
+		if (x < FIELD_SIZE - 2) {
+			for (let i = x + 1; i < FIELD_SIZE; i++) {
+				const field = fields[y][i]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (i === x + 1) break
+					return true
+				}
+			}
+		}
+
+		// 左上 をひっくり返せるかチェック
+		if (x > 1 && y > 1) {
+			for (let ix = x - 1, iy = y - 1; ix >= 0 && iy >= 0; ix--, iy--) {
+				const field = fields[iy][ix]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (ix === x - 1) break
+					return true
+				}
+			}
+		}
+
+		// 右下 をひっくり返せるかチェック
+		if (x < FIELD_SIZE - 2 && y < FIELD_SIZE - 2) {
+			for (let ix = x + 1, iy = y + 1; ix < FIELD_SIZE && iy < FIELD_SIZE; ix++, iy++) {
+				const field = fields[iy][ix]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (ix === x + 1) break
+					return true
+				}
+			}
+		}
+
+		// 右上 をひっくり返せるかチェック
+		if (x < FIELD_SIZE - 2 && y > 1) {
+			for (let ix = x + 1, iy = y - 1; ix < FIELD_SIZE && iy >= 0; ix++, iy--) {
+				const field = fields[iy][ix]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (ix === x + 1) break
+					return true
+				}
+			}
+		}
+
+		// 左下 をひっくり返せるかチェック
+		if (x > 1 && y < FIELD_SIZE - 2) {
+			for (let ix = x - 1, iy = y + 1; ix >= 0 && iy < FIELD_SIZE; ix--, iy++) {
+				const field = fields[iy][ix]
+				if (!field) break
+
+				if (field === currentColor) {
+					if (ix === x - 1) break
+					return true
+				}
+			}
+		}
+
+		return false
+	}
+
+	// TODO: 分かりにくいから関数にする
+	// 全フィールドを置けるか確認
+	$: {
+		const _ = currentColor // 石が変わる度に実行するために設置
+
+		putAbleFields = []
+		for (let y = 0; y < FIELD_SIZE; y++) {
+			for (let x = 0; x < FIELD_SIZE; x++) {
+				if (fields[y][x]) continue // 石が置かれている位置は除く
+
+				const ableToPut = checkPutAbility(y, x)
+				if (ableToPut) putAbleFields = [...putAbleFields, { x, y }]
+			}
+		}
+	}
+
 	// プレイヤーを交互に
 	const changePlayer = () => {
 		currentColor = currentColor === '白' ? '黒' : '白'

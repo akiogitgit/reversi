@@ -14,9 +14,11 @@
 	// 1. 盤上を表示
 	// 2. 順番に押す
 	// 3. 押せる場所を挟める場所のみに
+	// 3. (押せる場所を一覧で表示する？ or 押したときに挟めるか判定)
 	// 4. 挟んだらひっくり返す
 	// 5. 勝敗
 
+	type Position = { y: number; x: number }
 	type Field = null | '黒' | '白'
 	let fields: Field[][] = [
 		[null, null, null, null, null, null, null, null],
@@ -29,17 +31,62 @@
 		[null, null, null, null, null, null, null, null]
 	]
 
-	let nextPlayer: '黒' | '白' = '黒'
+	let currentColor: '黒' | '白' = '黒'
 
 	// プレイヤーを交互に
 	const changePlayer = () => {
-		nextPlayer = nextPlayer === '白' ? '黒' : '白'
+		currentColor = currentColor === '白' ? '黒' : '白'
+	}
+
+	// 受けとった位置の石をひっくり返す
+	const reverseFields = (targetFields: Position[]) => {
+		// TODO: console.log('受け取ったよ', targetFields)
+		for (let i = 0; i < targetFields.length; i++) {
+			const { x, y } = targetFields[i]
+			fields[y][x] = currentColor
+		}
+	}
+
+	// 挟めるか判定じゃなくて、挟む関数でいい
+	const checkSandwichAbility = (y: number, x: number): false | Position[] => {
+		let ableToPut = false // ひっくり返せる石があるか
+		const targetFields: Position[] = [] // ひっくり返す予定のフィールド
+
+		// 上　(上をひっくり返せる位置に置いた)
+		if (y > 1) {
+			const nextColor = fields[y - 1][x]
+			if (nextColor === currentColor) return false // 隣が同じ色
+
+			// forでcurrentColorと同じ色が出るまで、座標を配列に格納する
+			for (let i = y - 1; i >= 0; i--) {
+				const field = fields[i][x]
+				if (!field) break // 置かれていない
+
+				// 同じ色が出たら、trueにしてループを抜ける
+				if (field === currentColor) {
+					ableToPut = true
+					break
+				}
+				targetFields.push({ x, y: i })
+			}
+		}
+
+		// ひっくり返せるなら、対象の座標を返す
+		return ableToPut && targetFields
 	}
 
 	// フィールドを押す
+	// 挟めたかチェックして、置きたい
+	// 挟む関数で挟めたかを返すのはキモイ
 	const onClickField = (y: number, x: number) => {
-		if (fields[y][x]) return
-		fields[y][x] = nextPlayer
+		if (fields[y][x]) return // 既に置かれている
+
+		const targetFields = checkSandwichAbility(y, x)
+		if (!targetFields) return // ひっくり返せない
+
+		fields[y][x] = currentColor
+		// ひっくり返す関数(targetFields)
+		reverseFields(targetFields)
 		changePlayer()
 	}
 </script>
@@ -66,5 +113,5 @@
 		{/each}
 	</div>
 
-	<p class="mt-8 text-center text-xl">{nextPlayer === '白' ? '黒' : '白'}の番です</p>
+	<p class="mt-8 text-center text-xl">{currentColor === '白' ? '白' : '黒'}の番です</p>
 </section>

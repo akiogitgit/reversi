@@ -11,34 +11,23 @@
 	import { getPutAbleAllField, getReverseFields } from './reversi'
 	import GameStatus from '../components/GameStatus.svelte'
 
-	let fields: Field[][] =
-		// 両方パスで終了
-		[
-			['黒', '黒', '黒', '黒', '黒', '黒', null, '黒'],
-			['黒', null, '黒', '黒', '黒', '黒', '黒', '黒'],
-			['黒', '黒', '黒', '黒', '黒', '黒', '黒', '黒'],
-			['黒', '黒', '黒', '黒', '黒', '黒', '黒', '黒'],
-			['黒', '白', '黒', '黒', '黒', '黒', '黒', '黒'],
-			['黒', '黒', '黒', '黒', '黒', '黒', '黒', '黒'],
-			['黒', '黒', '黒', '黒', '黒', '黒', '黒', '黒'],
-			[null, '黒', '黒', '黒', '黒', '黒', '黒', '黒']
-		]
-	// [
-	// 	[null, null, null, null, null, null, null, null],
-	// 	[null, null, null, null, null, null, null, null],
-	// 	[null, null, null, null, null, null, null, null],
-	// 	[null, null, null, '白', '黒', null, null, null],
-	// 	[null, null, null, '黒', '白', null, null, null],
-	// 	[null, null, null, null, null, null, null, null],
-	// 	[null, null, null, null, null, null, null, null],
-	// 	[null, null, null, null, null, null, null, null]
-	// ]
+	let fields: Field[][] = [
+		[null, null, null, null, null, null, null, null],
+		[null, null, null, null, null, null, null, null],
+		[null, null, null, null, null, null, null, null],
+		[null, null, null, '白', '黒', null, null, null],
+		[null, null, null, '黒', '白', null, null, null],
+		[null, null, null, null, null, null, null, null],
+		[null, null, null, null, null, null, null, null],
+		[null, null, null, null, null, null, null, null]
+	]
 	let currentColor: Color = '黒'
-	let putAbleFields: Position[] = [] // 置くことが出来る位置
+	let putAbleFields: Position[] = getPutAbleAllField(fields, currentColor) // 置くことが出来る位置
 
 	// プレイヤーを交互に
 	const toggleTurn = () => {
 		currentColor = currentColor === '白' ? '黒' : '白'
+		// 置くことが出来る座標を更新
 		putAbleFields = getPutAbleAllField(fields, currentColor)
 	}
 

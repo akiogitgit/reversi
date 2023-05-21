@@ -17,10 +17,11 @@
 	let winner: Field = null // 〇の勝ち
 
 	// ここで終了か判定する
+	// currentColorが変わる度実行する
 	$: {
-		const _ = currentColor // プレイヤーが変わる度実行する
+		const _ = currentColor // watchするためだけに置く
 
-		let unableToPutBoth = false // どちらも置けない (命名文法的におかしい)
+		let unableToPutBoth = false // どちらも置けない (命名おかしい)
 
 		// 置ける場所が無く、前回パスした
 		if (!ableToPut && isPassedPrev) unableToPutBoth = true
@@ -40,7 +41,9 @@
 </script>
 
 <div class="flex text-xl gap-4 justify-center items-center">
-	{#if !isFinished}
+	{#if isFinished}
+		<EndGameMessage {finishMessage} {winner} />
+	{:else}
 		<div class="flex items-center justify-center">
 			<div
 				class="h-11vw max-h-60.5px max-w-60.5px grid w-11vw place-items-center sm:(h-60.5px w-60.5px) "
@@ -63,7 +66,5 @@
 				パスする
 			</button>
 		{/if}
-	{:else}
-		<EndGameMessage {finishMessage} {winner} />
 	{/if}
 </div>

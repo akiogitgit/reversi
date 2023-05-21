@@ -5,25 +5,8 @@ import {
 	type Position
 } from './+page.svelte'
 
-// 全フィールドで置ける座標を配列で返す
-export const getPutAbleAllField = (fields: Field[][], currentColor: Color) => {
-	const putAbleFields: Position[] = []
-
-	for (let y = 0; y < FIELD_SIZE; y++) {
-		for (let x = 0; x < FIELD_SIZE; x++) {
-			if (fields[y][x]) continue // 石が置かれている位置は除く
-
-			// この時の座標を置くことが出来るか確認
-			const ableToPut = checkPutAbility(y, x, fields, currentColor)
-			if (ableToPut) putAbleFields.push({ x, y })
-		}
-	}
-
-	return putAbleFields
-}
-
 // 座標が押せるかをチェック
-export const checkPutAbility = (
+const checkPutAbility = (
 	y: number,
 	x: number,
 	fields: Field[][],
@@ -140,6 +123,23 @@ export const checkPutAbility = (
 	}
 
 	return false
+}
+
+// 全フィールドで置ける座標を配列で返す
+export const getPutAbleAllField = (fields: Field[][], currentColor: Color) => {
+	const putAbleFields: Position[] = []
+
+	for (let y = 0; y < FIELD_SIZE; y++) {
+		for (let x = 0; x < FIELD_SIZE; x++) {
+			if (fields[y][x]) continue // 石が置かれている位置は除く
+
+			// この時の座標を置くことが出来るか確認
+			const ableToPut = checkPutAbility(y, x, fields, currentColor)
+			if (ableToPut) putAbleFields.push({ x, y })
+		}
+	}
+
+	return putAbleFields
 }
 
 // 置くときにひっくり返す座標を配列で返す

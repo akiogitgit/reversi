@@ -50,7 +50,6 @@
 		fields[y][x] = currentColor // 石を置く
 		reverseFields(targetFields) // ひっくり返す
 		toggleTurn()
-		putAbleFields = getPutAbleAllField(fields, currentColor)
 	}
 </script>
 

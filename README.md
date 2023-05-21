@@ -1,5 +1,9 @@
 ## リバーシ
 
+このURLから遊べます
+
+https://reversi-fawn.vercel.app
+
 - 動作プラットフォーム: Windows
 - 開発プラットフォーム: Windows
 - 開発言語: HTML/CSS, JavaScript(TypeScript)

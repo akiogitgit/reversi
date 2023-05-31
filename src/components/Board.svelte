@@ -10,7 +10,8 @@
 	export let putAbleFields: Position[]
 	export let currentColor: '白' | '黒'
 
-	const putAble = (x: number, y: number) => {
+	// なぜかパスの次に実行されないので、putAbleFieldsが変わる度に再計算させる
+	$: putAble = (x: number, y: number) => {
 		return putAbleFields.find(pos => pos.x === x && pos.y === y)
 	}
 </script>
